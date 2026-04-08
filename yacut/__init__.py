@@ -15,10 +15,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 from . import error_handlers, views, api_views
-from .exceptions import ShortLinkAPIError
+from .exceptions import ShortLinkError
 
 app.register_error_handler(
-    ShortLinkAPIError,
+    ShortLinkError,
     error_handlers.short_link_api_error,
 )
 app.register_error_handler(404, error_handlers.page_not_found)

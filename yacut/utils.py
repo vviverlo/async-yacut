@@ -1,13 +1,8 @@
-import random
-
 from .constants import (
-    ALLOWED_SHORT_CHARS,
     ALPHANUMERIC_PATTERN,
-    AUTO_SHORT_ID_LENGTH,
     CUSTOM_SHORT_ID_MAX_LENGTH,
     DISALLOWED_SHORT_IDS,
 )
-from .models import URLMap
 
 INVALID_SHORT_ID_MSG = 'Указано недопустимое имя для короткой ссылки'
 DUPLICATE_SHORT_ID_MSG = 'Предложенный вариант короткой ссылки уже существует.'
@@ -20,19 +15,9 @@ def is_valid_short_id(short_id):
     return bool(short_id and ALPHANUMERIC_PATTERN.fullmatch(short_id))
 
 
-def get_unique_short_id():
-    while True:
-        short_id = ''.join(
-            random.choices(ALLOWED_SHORT_CHARS, k=AUTO_SHORT_ID_LENGTH)
-        )
-        if (
-            short_id.lower() not in DISALLOWED_SHORT_IDS
-            and URLMap.query.filter_by(short=short_id).first() is None
-        ):
-            return short_id
-
-
 def validate_custom_short_id(custom_id):
+    from .models import URLMap
+
     if not custom_id:
         return
     if custom_id.lower() in DISALLOWED_SHORT_IDS:

@@ -5,7 +5,7 @@ from flask import flash, redirect, render_template, session, url_for
 from yacut import app
 
 from .disk import YandexDiskAPIError, upload_file_and_get_download_link
-from .exceptions import ShortLinkAPIError
+from .exceptions import ShortLinkError
 from .forms import URLMapForm, UploadFilesForm
 from .models import URLMap
 from .utils import DUPLICATE_SHORT_ID_MSG
@@ -23,7 +23,7 @@ def index_view():
                 form.original_link.data,
                 form.custom_id.data,
             )
-        except ShortLinkAPIError as exc:
+        except ShortLinkError as exc:
             if exc.message == DUPLICATE_SHORT_ID_MSG:
                 flash(exc.message)
             return render_template('index.html', form=form, short_link=None)
