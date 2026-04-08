@@ -3,6 +3,15 @@ from http import HTTPStatus
 from flask import jsonify, render_template, request
 
 
+def short_link_api_error(error):
+    if request.path.startswith('/api/'):
+        return jsonify({'message': error.message}), error.status_code
+    return (
+        render_template('500.html'),
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
+
+
 def page_not_found(error):
     if request.path.startswith('/api/'):
         return (

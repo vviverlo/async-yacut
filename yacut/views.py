@@ -2,16 +2,13 @@ import asyncio
 
 from flask import flash, redirect, render_template, session, url_for
 
-from yacut import app, db
+from yacut import app
 
 from .disk import YandexDiskAPIError, upload_file_and_get_download_link
+from .exceptions import ShortLinkAPIError
 from .forms import URLMapForm, UploadFilesForm
 from .models import URLMap
-from .utils import (
-    DUPLICATE_SHORT_ID_MSG,
-    get_unique_short_id,
-    validate_custom_short_id,
-)
+from .utils import DUPLICATE_SHORT_ID_MSG
 
 FILES_UPLOAD_ROWS_KEY = 'files_upload_rows'
 
@@ -21,21 +18,17 @@ def index_view():
     form = URLMapForm()
     short_link = None
     if form.validate_on_submit():
-        custom_id = form.custom_id.data
         try:
-            validate_custom_short_id(custom_id)
-        except KeyError:
-            flash(DUPLICATE_SHORT_ID_MSG)
-            return render_template('index.html', form=form)
-        except ValueError:
-            return render_template('index.html', form=form)
-
-        short_id = custom_id or get_unique_short_id()
-        url_map = URLMap(original=form.original_link.data, short=short_id)
-        db.session.add(url_map)
-        db.session.commit()
+            url_map = URLMap.create_from_payload(
+                form.original_link.data,
+                form.custom_id.data,
+            )
+        except ShortLinkAPIError as exc:
+            if exc.message == DUPLICATE_SHORT_ID_MSG:
+                flash(exc.message)
+            return render_template('index.html', form=form, short_link=None)
         short_link = url_for(
-            'redirect_view', short_id=short_id, _external=True
+            'redirect_view', short_id=url_map.short, _external=True
         )
     return render_template('index.html', form=form, short_link=short_link)
 
@@ -62,18 +55,17 @@ def files_view():
             )
         new_rows = []
         for file_name, file_link in results:
-            short_id = get_unique_short_id()
-            url_map = URLMap(original=file_link, short=short_id)
-            db.session.add(url_map)
+            url_map = URLMap.create_from_payload(file_link, None)
             new_rows.append(
                 {
                     'name': file_name,
                     'short_link': url_for(
-                        'redirect_view', short_id=short_id, _external=True
+                        'redirect_view',
+                        short_id=url_map.short,
+                        _external=True,
                     ),
                 }
             )
-        db.session.commit()
         uploaded_rows = uploaded_rows + new_rows
         session[FILES_UPLOAD_ROWS_KEY] = uploaded_rows
         session.modified = True

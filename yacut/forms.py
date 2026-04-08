@@ -3,7 +3,7 @@ from flask_wtf.file import FileRequired, MultipleFileField
 from wtforms import StringField, SubmitField, URLField
 from wtforms.validators import Length, Optional, Regexp, URL, DataRequired
 
-from .constants import CUSTOM_SHORT_ID_MAX_LENGTH
+from .constants import CUSTOM_SHORT_ID_MAX_LENGTH, CUSTOM_SHORT_ID_REGEX
 
 
 class URLMapForm(FlaskForm):
@@ -17,7 +17,7 @@ class URLMapForm(FlaskForm):
             Optional(),
             Length(max=CUSTOM_SHORT_ID_MAX_LENGTH),
             Regexp(
-                r'^[A-Za-z0-9]*$',
+                CUSTOM_SHORT_ID_REGEX,
                 message='Допустимы только латинские буквы и цифры',
             ),
         ],

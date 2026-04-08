@@ -1,6 +1,7 @@
 import os
 import ssl
 import uuid
+from http import HTTPStatus
 from urllib.parse import quote
 
 import aiohttp
@@ -62,7 +63,10 @@ async def upload_file_and_get_download_link(file_storage):
             },
         ) as response:
             upload_data = await response.json(content_type=None)
-            if response.status != 200 or not isinstance(upload_data, dict):
+            if (
+                response.status != HTTPStatus.OK
+                or not isinstance(upload_data, dict)
+            ):
                 raise YandexDiskAPIError(
                     _yandex_error_message(upload_data, response.status)
                 )
@@ -76,7 +80,11 @@ async def upload_file_and_get_download_link(file_storage):
         async with session.put(
             upload_url, data=file_storage.read()
         ) as put_resp:
-            if put_resp.status not in (200, 201, 202):
+            if put_resp.status not in (
+                HTTPStatus.OK,
+                HTTPStatus.CREATED,
+                HTTPStatus.ACCEPTED,
+            ):
                 text = (await put_resp.text())[:500]
                 msg = (
                     f'Не удалось загрузить файл на Диск '
@@ -92,7 +100,10 @@ async def upload_file_and_get_download_link(file_storage):
             },
         ) as response:
             download_data = await response.json(content_type=None)
-            if response.status != 200 or not isinstance(download_data, dict):
+            if (
+                response.status != HTTPStatus.OK
+                or not isinstance(download_data, dict)
+            ):
                 raise YandexDiskAPIError(
                     _yandex_error_message(download_data, response.status)
                 )
